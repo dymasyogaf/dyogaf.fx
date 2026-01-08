@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  body {
+    @apply bg-base-950 text-slate-100 antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(103, 212, 166, 0.18), transparent 45%),
+      radial-gradient(circle at 15% 80%, rgba(79, 130, 218, 0.15), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(243, 106, 106, 0.12), transparent 35%);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-base-900/70 backdrop-blur border border-white/10;
+  }
+
+  .stat-label {
+    @apply text-[11px] uppercase tracking-widest text-slate-400;
+  }
+
+  .stat-value {
+    @apply text-sm font-semibold text-slate-100;
+  }
+
+  .pill {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "dyogaf-fx",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "^6.11.4",
+    "nuxt": "3.13.2"
+  }
+}
