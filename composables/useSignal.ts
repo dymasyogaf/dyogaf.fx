@@ -13,8 +13,8 @@ export type SignalResponse = {
   reasons: SignalReason[];
   inputs: {
     last: number;
-    change15m: number | null;
-    change1h: number | null;
+    changeShort: number | null;
+    changeLong: number | null;
     volume24h: number;
   };
   updatedAt: string;

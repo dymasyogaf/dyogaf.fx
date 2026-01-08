@@ -1,4 +1,5 @@
 export const allowedPairs = [
+  "btcidr",
   "pepeidr",
   "dogeidr",
   "shibidr",

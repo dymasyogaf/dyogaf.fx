@@ -3,8 +3,10 @@ const props = defineProps<{
   signal: string;
   headline: string;
   lastPrice: number | null;
-  change15m: number | null;
-  change1h: number | null;
+  changeShort: number | null;
+  changeLong: number | null;
+  changeShortLabel: string;
+  changeLongLabel: string;
   volume24h: number | null;
   lastUpdated: string;
   loading: boolean;
@@ -76,16 +78,16 @@ const formatPercent = (value: number | null) => {
 
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div class="rounded-2xl border border-white/10 bg-base-800/60 px-4 py-3">
-          <p class="stat-label">Change 15m</p>
-          <p class="stat-value">{{ formatPercent(props.change15m) }}</p>
-          <p v-if="props.change15m === null" class="mt-1 text-xs text-slate-400">
+          <p class="stat-label">Change {{ props.changeShortLabel }}</p>
+          <p class="stat-value">{{ formatPercent(props.changeShort) }}</p>
+          <p v-if="props.changeShort === null" class="mt-1 text-xs text-slate-400">
             collecting data...
           </p>
         </div>
         <div class="rounded-2xl border border-white/10 bg-base-800/60 px-4 py-3">
-          <p class="stat-label">Change 1h</p>
-          <p class="stat-value">{{ formatPercent(props.change1h) }}</p>
-          <p v-if="props.change1h === null" class="mt-1 text-xs text-slate-400">
+          <p class="stat-label">Change {{ props.changeLongLabel }}</p>
+          <p class="stat-value">{{ formatPercent(props.changeLong) }}</p>
+          <p v-if="props.changeLong === null" class="mt-1 text-xs text-slate-400">
             collecting data...
           </p>
         </div>

@@ -13,8 +13,9 @@ type TickerPayload = {
 type HistoryPoint = { t: number; price: number };
 
 const CACHE_TTL_MS = 3000;
-const HISTORY_WINDOW_MS = 2 * 60 * 60 * 1000;
-const HISTORY_MAX_POINTS = 1000;
+const HISTORY_WINDOW_MS = 31 * 24 * 60 * 60 * 1000;
+const HISTORY_MAX_POINTS = 50000;
+const HISTORY_MIN_INTERVAL_MS = 60 * 1000;
 
 const tickerCache = new Map<string, { t: number; data: TickerPayload }>();
 const priceHistory = new Map<string, HistoryPoint[]>();
@@ -22,6 +23,10 @@ const priceHistory = new Map<string, HistoryPoint[]>();
 const recordHistory = (pair: AllowedPair, price: number) => {
   const now = Date.now();
   const list = priceHistory.get(pair) ?? [];
+  const lastPoint = list[list.length - 1];
+  if (lastPoint && now - lastPoint.t < HISTORY_MIN_INTERVAL_MS) {
+    return;
+  }
   list.push({ t: now, price });
   const cutoff = now - HISTORY_WINDOW_MS;
   const trimmed = list.filter((item) => item.t >= cutoff).slice(-HISTORY_MAX_POINTS);
@@ -58,11 +63,12 @@ export const fetchTicker = async (pair: AllowedPair) => {
   return ticker;
 };
 
-export const getMarketSnapshot = async (pair: AllowedPair) => {
+export const getMarketSnapshot = async (pair: AllowedPair, tfMinutes = 15) => {
   const ticker = await fetchTicker(pair);
   const last = Number(ticker.last);
-  const change15m = last ? getChange(pair, 15, last) : null;
-  const change1h = last ? getChange(pair, 60, last) : null;
+  const changeShort = last ? getChange(pair, tfMinutes, last) : null;
+  const longMinutes = Math.min(tfMinutes * 4, 43200);
+  const changeLong = last ? getChange(pair, longMinutes, last) : null;
   const volume24h = Number(ticker.vol_idr);
 
   const lastUpdated = new Date();
@@ -78,8 +84,10 @@ export const getMarketSnapshot = async (pair: AllowedPair) => {
   return {
     pair,
     last,
-    change15m,
-    change1h,
+    changeShort,
+    changeLong,
+    changeShortMinutes: tfMinutes,
+    changeLongMinutes: longMinutes,
     volume24h,
     lastUpdated: lastUpdated.toISOString(),
     lastUpdatedWib,

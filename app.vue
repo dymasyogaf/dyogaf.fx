@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { computed, ref } from "vue";
+import { useMarketSignal } from "./composables/useMarketSignal";
 const pairOptions = [
+  { label: "BTC/IDR", value: "btcidr" },
   { label: "PEPE/IDR", value: "pepeidr" },
   { label: "DOGE/IDR", value: "dogeidr" },
   { label: "SHIB/IDR", value: "shibidr" },
@@ -8,18 +11,39 @@ const pairOptions = [
 ];
 
 const selectedPair = ref(pairOptions[0].value);
+const timeframeOptions = [
+  { label: "3 menit", value: 3 },
+  { label: "15 menit", value: 15 },
+  { label: "30 menit", value: 30 },
+  { label: "60 menit", value: 60 },
+  { label: "1 hari", value: 1440 },
+  { label: "7 hari", value: 10080 },
+  { label: "30 hari", value: 43200 }
+];
+const selectedTimeframe = ref(timeframeOptions[1].value);
+const selectedTimeframeLabel = computed(() => {
+  return timeframeOptions.find((option) => option.value === selectedTimeframe.value)
+    ?.label ?? "15 menit";
+});
 
-const { data, loading, error, refresh } = useMarketSignal(selectedPair, 5000);
-const {
-  candles,
-  loading: ohlcLoading,
-  error: ohlcError
-} = useOhlc(selectedPair, 15, 96, 60_000);
+const { data, loading, error, refresh } = useMarketSignal(
+  selectedPair,
+  selectedTimeframe,
+  5000
+);
 
 const lastPrice = computed(() => data.value?.market.last ?? null);
 const volume24h = computed(() => data.value?.market.volume24h ?? null);
-const change15m = computed(() => data.value?.market.change15m ?? null);
-const change1h = computed(() => data.value?.market.change1h ?? null);
+const changeShort = computed(() => data.value?.market.changeShort ?? null);
+const changeLong = computed(() => data.value?.market.changeLong ?? null);
+const changeShortLabel = computed(() => {
+  const minutes = data.value?.market.changeShortMinutes ?? selectedTimeframe.value;
+  return formatTimeframeLabel(minutes);
+});
+const changeLongLabel = computed(() => {
+  const minutes = data.value?.market.changeLongMinutes ?? selectedTimeframe.value * 4;
+  return formatTimeframeLabel(minutes);
+});
 const lastUpdatedWib = computed(
   () => data.value?.market.lastUpdatedWib ?? "--"
 );
@@ -29,6 +53,15 @@ const signalReasons = computed(() => data.value?.signal.reasons ?? []);
 const signalErrorMessage = computed(() => error.value || null);
 
 const connectionLabel = computed(() => (error.value ? "OFFLINE" : "LIVE"));
+
+const formatTimeframeLabel = (minutes: number) => {
+  if (minutes < 60) return `${minutes}m`;
+  if (minutes === 60) return "1h";
+  if (minutes === 1440) return "1D";
+  if (minutes === 10080) return "7D";
+  if (minutes === 43200) return "30D";
+  return `${minutes}m`;
+};
 </script>
 
 <template>
@@ -40,7 +73,7 @@ const connectionLabel = computed(() => (error.value ? "OFFLINE" : "LIVE"));
         <div>
           <h1 class="text-2xl font-semibold tracking-tight">Dyogaf.fx</h1>
           <p class="text-sm text-slate-400">
-            Spot Pullback Helper • 15m
+            Spot Pullback Helper - {{ selectedTimeframeLabel }}
           </p>
         </div>
         <span
@@ -67,7 +100,8 @@ const connectionLabel = computed(() => (error.value ? "OFFLINE" : "LIVE"));
       <PairSelector
         v-model="selectedPair"
         :options="pairOptions"
-        timeframe="15m"
+        v-model:timeframe="selectedTimeframe"
+        :timeframes="timeframeOptions"
       />
     </section>
 
@@ -77,11 +111,13 @@ const connectionLabel = computed(() => (error.value ? "OFFLINE" : "LIVE"));
           :signal="signalStatus"
           :headline="signalHeadline"
           :last-price="lastPrice"
-          :change-15m="change15m"
-          :change-1h="change1h"
+          :change-short="changeShort"
+          :change-long="changeLong"
+          :change-short-label="changeShortLabel"
+          :change-long-label="changeLongLabel"
           :volume-24h="volume24h"
           :last-updated="lastUpdatedWib"
-          :loading="loading || signalLoading"
+          :loading="loading"
           :error="signalErrorMessage"
         />
         <ReasonChecklist :reasons="signalReasons" />
@@ -93,3 +129,4 @@ const connectionLabel = computed(() => (error.value ? "OFFLINE" : "LIVE"));
     </section>
   </div>
 </template>
+

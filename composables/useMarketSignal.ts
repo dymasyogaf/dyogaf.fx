@@ -17,8 +17,10 @@ type MarketTicker = {
 type MarketSnapshot = {
   pair: string;
   last: number;
-  change15m: number | null;
-  change1h: number | null;
+  changeShort: number | null;
+  changeLong: number | null;
+  changeShortMinutes: number;
+  changeLongMinutes: number;
   volume24h: number;
   lastUpdated: string;
   lastUpdatedWib: string;
@@ -39,7 +41,11 @@ type MarketSignalResponse = {
 
 const RATE_LIMIT_COOLDOWN_MS = 10_000;
 
-export function useMarketSignal(pair: Ref<string>, pollMs = 5000) {
+export function useMarketSignal(
+  pair: Ref<string>,
+  timeframe: Ref<number>,
+  pollMs = 5000
+) {
   const data = ref<MarketSignalResponse | null>(null);
   const loading = ref(true);
   const error = ref<string | null>(null);
@@ -58,7 +64,7 @@ export function useMarketSignal(pair: Ref<string>, pollMs = 5000) {
 
     try {
       const response = await $fetch<MarketSignalResponse>("/api/market-signal", {
-        query: { pair: pair.value }
+        query: { pair: pair.value, tf: timeframe.value }
       });
       data.value = response;
     } catch (err) {
@@ -92,10 +98,12 @@ export function useMarketSignal(pair: Ref<string>, pollMs = 5000) {
   };
 
   watch(
-    pair,
+    [pair, timeframe],
     async () => {
       await fetchMarketSignal(true);
-      startPolling();
+      if (process.client) {
+        startPolling();
+      }
     },
     { immediate: true }
   );

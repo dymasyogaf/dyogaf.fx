@@ -1,36 +1,38 @@
 import { createError, defineEventHandler, getQuery } from "h3";
 import { normalizePair } from "../utils/pairs";
 import { getMarketSnapshot } from "../utils/marketStore";
+import { formatTimeframeLabel, normalizeTimeframe } from "../utils/timeframes";
 import { enforceRateLimit } from "../utils/rateLimit";
 import { buildSignal } from "../utils/signalRules";
 
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
   const pair = normalizePair(String(query.pair ?? ""));
+  const timeframe = normalizeTimeframe(query.tf ?? 15);
 
-  if (!pair) {
+  if (!pair || !timeframe) {
     throw createError({
       statusCode: 400,
-      statusMessage: "Unsupported pair"
+      statusMessage: "Unsupported pair/timeframe"
     });
   }
 
-  enforceRateLimit(event, `signal:${pair}`, 30, 60_000);
+  enforceRateLimit(event, `signal:${pair}:${timeframe.minutes}`, 30, 60_000);
 
   try {
-    const market = await getMarketSnapshot(pair);
+    const market = await getMarketSnapshot(pair, timeframe.minutes);
     const signal = buildSignal(market);
 
     return {
       pair,
-      timeframe: "15m",
+      timeframe: formatTimeframeLabel(timeframe.minutes),
       status: signal.status,
       headline: signal.headline,
       reasons: signal.reasons,
       inputs: {
         last: market.last,
-        change15m: market.change15m,
-        change1h: market.change1h,
+        changeShort: market.changeShort,
+        changeLong: market.changeLong,
         volume24h: market.volume24h
       },
       updatedAt: market.lastUpdated

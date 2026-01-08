@@ -10,8 +10,10 @@ type MarketTicker = {
 export type MarketSnapshot = {
   pair: string;
   last: number;
-  change15m: number | null;
-  change1h: number | null;
+  changeShort: number | null;
+  changeLong: number | null;
+  changeShortMinutes: number;
+  changeLongMinutes: number;
   volume24h: number;
   lastUpdated: string;
   lastUpdatedWib: string;
